@@ -150,11 +150,26 @@ int main() {
   return 0;
 }/*FIM-main*/
 
-void sair(Cabecalho *c){
+void sair(Cabecalho *c) {
   //Libera lista
   Agenda *atual = c->inicio, *aux;
+    
+  if(atual==NULL) 
+    printf("\nNao ha contatos cadastrados!\n");  
 
-  for(aux = atual; aux != NULL; atual = aux){
+  else{
+    FILE *arquivo;
+    arquivo = fopen("contatos2.txt", "w+");
+
+    for(aux= atual; aux != NULL; atual = aux) {
+      fprintf(arquivo, "\n%s\n%s\n%s\n%05d\n%s\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
+      aux= aux->prox;
+    }
+
+    fclose(arquivo);
+  }
+  
+  for(aux = atual; aux != NULL; atual = aux) {
     aux = aux->prox;
     free(atual->info);
     free(atual);
@@ -164,16 +179,7 @@ void sair(Cabecalho *c){
 }/*FIM-sair*/
 
 void imprime_agenda(Cabecalho *c){
-  FILE *arquivo=NULL;
-  char ch;
   
-  arquivo = fopen("contatos.txt","r");
-
-  if(!arquivo) {
-    printf("ERROR!\n");
-    exit(1);
-  }
-    
   printf("   LISTA DE CONTATOS\n");
 
   Agenda *atual = c->inicio, *aux;
@@ -181,8 +187,8 @@ void imprime_agenda(Cabecalho *c){
   if(atual==NULL) 
     printf("\nNao ha contatos cadastrados!\n");  
 
-  else{
-    for(aux= atual; aux != NULL; atual = aux){
+  else{ 
+    for(aux= atual; aux != NULL; atual = aux) {
       printf("\n%s\n%s\n%s\n%05d\n%s\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
       aux= aux->prox;
     }
@@ -401,16 +407,11 @@ void carrega_contatos(Cabecalho *c){
   arquivo = fopen("contatos.txt", "r");
   
   while((fscanf(arquivo, " %[^'\n'] %[^'\n'] %[^'\n'] %d %[^'\n'] %c\n", Nome, Telefone, Endereco, &CEP, DATA_NASC, &ch))!=EOF) {
-      
+
       carrega = cria_contato(Nome, Telefone, Endereco, CEP, DATA_NASC);
       insertion_sort_contato(c, carrega);    
 
-    if(ch=='$')
-      count+=1;
   }
 
-  printf("\n%d contatos cadastrados\n", count);
-
   fclose(arquivo); 
-  
 }
