@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <regex.h>
+
 #define MAX_CONTATO 101
 #define TRUE 1
 #define FALSE 0
@@ -66,7 +68,7 @@ int main() {
     getchar();
   
     switch (opc){
-      case 1:{
+      case 1: {
           system("clear");
           printf("\n     REGISTRO\n");
           int cep, valida;
@@ -235,30 +237,35 @@ int valida_cep(int cep){
 
 }/*FIM-valida_cep*/
 
-int valida_data_nasc(char *data_nasc){
-  int tam, digitos, dia, mes;
-  tam = (int)strlen(data_nasc);
-  digitos = FALSE;
+int valida_data_nasc(char *data_nasc) {
+  char dia[3];
+  char mes[3];
+  char ano[5];
 
-  for(int i = 0; i < 10; i++){
-    if((i == 2 || i == 5) && data_nasc[i] != '/')
-      digitos = TRUE;
-    else if(i != 2 && i != 5 && ( ((int)data_nasc[i]) < 48 || ((int)data_nasc[i]) > 57) )
-      digitos = TRUE;
-  }
+  sprintf(dia, "%c%c", data_nasc[0], data_nasc[1]);
+  sprintf(mes, "%c%c", data_nasc[3], data_nasc[4]);
+  sprintf(ano, "%c%c%c%c", data_nasc[6], data_nasc[7], data_nasc[8], data_nasc[9]);
+      
+  if((atoi(dia) >= 1 && atoi(dia) <= 31) && (atoi(mes) >= 1 && atoi(mes) <= 12) && (atoi(ano) >= 1900 && atoi(ano) <= 2018))  {//verifica se os numeros sao validos 
+            
+    if ((atoi(dia) == 29 && atoi(mes) == 2) && ((atoi(ano) % 4) == 0)) //verifica se o ano e bissexto
+        return TRUE;
+              
+    if (atoi(dia) <= 28 && atoi(mes) == 2) //verifica o mes de feveireiro
+        return TRUE;
+            
+    if ((atoi(dia) <= 30) && (atoi(mes) == 4 || atoi(mes) == 6 || atoi(mes) == 9 || atoi(mes) == 11)) //verifica os meses de 30 dias
+      return TRUE;
+            
+    if ((atoi(dia) <=31) && (atoi(mes) == 1 || atoi(mes) == 3 || atoi(mes) == 5 || atoi(mes) == 7 || atoi(mes) ==8 || atoi(mes) == 10 || atoi(mes) == 12)) //verifica os meses de 31 dias
+      return TRUE;
+            
+    else
+      return FALSE;          
+    }
 
-  if(digitos == FALSE){
-    dia = (((int)data_nasc[0] - 48) * 10) + ((int)data_nasc[1] - 48);
-    mes = (((int)data_nasc[3] - 48) * 10) + ((int)data_nasc[4] - 48);
-
-    if((dia < 1 || dia > 31) || (mes < 1 || mes > 12))
-      digitos = TRUE;
-  }
-
-  if(tam != 10 || digitos)
-    return FALSE; //Não validou
-  else
-    return TRUE; //Validou
+    else
+      return FALSE;           
 }/*FIM-valida_data_nasc*/
 
 void insertion_sort_contato(Cabecalho *c, Agenda *novo){
