@@ -14,13 +14,15 @@
 #define FALSE 0
 
 //Info do nó da lista
-typedef struct contato{
+typedef struct  {
+  
   char nome[MAX_CONTATO];
   char telefone[11];
   char endereco[MAX_CONTATO];
   unsigned int cep;
   char data_nasc[11];
-}Contato;
+
+} Contato;
 
 //Nó da lista
 typedef struct agenda{
@@ -33,6 +35,7 @@ typedef struct cabecalho{
   int tamanho; //Quantidade de contatos da agenda
 }Cabecalho;
 
+void carrega_contatos(Cabecalho *c);
 Cabecalho* inicia_cabecalho();
 Agenda* cria_contato(char *nome, char *tel, char *end, int cep, char *nasc); //aloca novo contato da agenda
 void insertion_sort_contato(Cabecalho *c, Agenda *novo); //insere contato na agenda ordenado pelo nome
@@ -45,22 +48,27 @@ void sair(Cabecalho *c); //altera arquivo e libera agenda
 //void remover_contatos_por_string(); //remove todos os contatos que tiverem a string de entrada
 //void imprime_contatos_por_string(); //imprime todos os contatos que tiverem a string de entrada
 
-int main(int argc, char const *argv[]){
+int main() {
+  
   Cabecalho *c;
   int opc = 0;
-
   c = inicia_cabecalho();
 
+  carrega_contatos(c);
+  
   /*
    * MENU
    */
-  do{
+  do {
+    system("clear");
     printf("\n\n>>>>>>> LISTA DE CONTATOS <<<<<<<\n\n1) Inserir novo registro;\n2) Remover registros por string;\n3) Visualizar registro por string;\n4) Imprimir lista em ordem alfabética;\n5) Sair;\n\nDIGITE SUA ESCOLHA: ");
     scanf("%d", &opc);
     getchar();
-
+  
     switch (opc){
       case 1:{
+          system("clear");
+          printf("\n     REGISTRO\n");
           int cep, valida;
           char nome[MAX_CONTATO], endereco[MAX_CONTATO], tel[11], data_nasc[11];
           Agenda *novo;
@@ -112,6 +120,10 @@ int main(int argc, char const *argv[]){
 
           novo = cria_contato(nome, tel, endereco, cep, data_nasc);
           insertion_sort_contato(c, novo);
+          
+          printf("\n\nRegistro Efetuado com sucesso!\n");
+          printf("Pressione Enter para voltar ao menu...\n");
+          getchar();
       }break;
 
       case 2:{
@@ -120,10 +132,13 @@ int main(int argc, char const *argv[]){
 
       case 3:{
 
+
       }break;
 
       case 4:
+        system("clear");
         imprime_agenda(c);
+        // system("clear");
         break;
     }
 
@@ -149,12 +164,32 @@ void sair(Cabecalho *c){
 }/*FIM-sair*/
 
 void imprime_agenda(Cabecalho *c){
+  FILE *arquivo=NULL;
+  char ch;
+  
+  arquivo = fopen("contatos.txt","r");
+
+  if(!arquivo) {
+    printf("ERROR!\n");
+    exit(1);
+  }
+    
+  printf("   LISTA DE CONTATOS\n");
+
   Agenda *atual = c->inicio, *aux;
 
-  for(aux= atual; aux != NULL; atual = aux){
-    printf("\n\n%s\n%s\n%s\n%05d\n%s\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
-    aux= aux->prox;
+  if(atual==NULL) 
+    printf("\nNao ha contatos cadastrados!\n");  
+
+  else{
+    for(aux= atual; aux != NULL; atual = aux){
+      printf("\n%s\n%s\n%s\n%05d\n%s\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
+      aux= aux->prox;
+    }
   }
+
+  printf("\nPressione Enter para voltar ao menu!\n");
+  getchar();
 }/*FIM-imprime_agenda*/
 
 int valida_nome_endereco(char *vetor){
@@ -187,7 +222,7 @@ int valida_telefone(char *tel){
 }/*FIM-valida_telefone*/
 
 int valida_cep(int cep){
-  if(cep < 0 || cep > 99999)
+  if(cep < 0 || cep > 99999999)
     return FALSE; //Não validou
   else
     return TRUE; //Validou
@@ -348,3 +383,34 @@ Agenda* cria_contato(char *nome, char *tel, char *end, int cep, char *nasc){
 
   return a;
 }/*FIM-cria_contato*/
+
+void carrega_contatos(Cabecalho *c){
+  Agenda *carrega;
+  
+  char ch;
+  FILE *arquivo;
+  
+  int count = 0;
+ 
+  char Nome[101];
+  char Telefone[11];
+  char Endereco[101];
+  int CEP;
+  char DATA_NASC[11];
+  
+  arquivo = fopen("contatos.txt", "r");
+  
+  while((fscanf(arquivo, " %[^'\n'] %[^'\n'] %[^'\n'] %d %[^'\n'] %c\n", Nome, Telefone, Endereco, &CEP, DATA_NASC, &ch))!=EOF) {
+      
+      carrega = cria_contato(Nome, Telefone, Endereco, CEP, DATA_NASC);
+      insertion_sort_contato(c, carrega);    
+
+    if(ch=='$')
+      count+=1;
+  }
+
+  printf("\n%d contatos cadastrados\n", count);
+
+  fclose(arquivo); 
+  
+}
