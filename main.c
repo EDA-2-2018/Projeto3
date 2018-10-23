@@ -118,8 +118,8 @@ void menu(Cabecalho *c){
     getchar();
 
     switch (opc){
-      system("clear");
       case 1:{
+          system("clear");
           int cep, valida;
           char nome[MAX_CONTATO], endereco[MAX_CONTATO], tel[11], data_nasc[11];
           Agenda *novo;
