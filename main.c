@@ -112,11 +112,13 @@ void menu(Cabecalho *c){
   int opc = 0;
 
   do{
+    system("clear");
     printf("\n\n>>>>>>> LISTA DE CONTATOS <<<<<<<\n\n1) Inserir novo registro;\n2) Remover registros por string;\n3) Visualizar registro por string;\n4) Imprimir lista em ordem alfabética;\n5) Sair;\n\nDIGITE SUA ESCOLHA: ");
     scanf("%d", &opc);
     getchar();
 
     switch (opc){
+      system("clear");
       case 1:{
           int cep, valida;
           char nome[MAX_CONTATO], endereco[MAX_CONTATO], tel[11], data_nasc[11];
@@ -169,6 +171,10 @@ void menu(Cabecalho *c){
 
           novo = cria_contato(nome, tel, endereco, cep, data_nasc);
           insertion_sort_contato(c, novo);
+
+          printf("\n\nRegistro Efetuado com sucesso!\n");
+          printf("Pressione Enter para voltar ao menu...\n");
+          getchar();
       }break;
 
       case 2:{
@@ -183,19 +189,23 @@ void menu(Cabecalho *c){
       }break;
 
       case 3:{
+        system("clear");
         char pesquisa[MAX_CONTATO];
 
         printf("\nDigite a string de pesquisa: ");
         scanf("%[^\n]", pesquisa);
         getchar();
 
-        system("clear");
         imprime_contatos_por_string(pesquisa, c);
+
+        printf("\n\nPressione Enter para voltar ao menu...\n");
+        getchar();
 
       }break;
 
       case 4:
         system("clear");
+        printf("   LISTA DE CONTATOS");
         imprime_agenda(c);
         break;
       default:
@@ -339,7 +349,14 @@ void imprime_agenda(Cabecalho *c){
     //printf("Inicio: %s\nFim: %s\n", c->inicio->info->nome, c->fim->info->nome);
     aux= aux->prox;
   }
+  
+  if (c->tamanho == 0) 
+    printf("\n");
+  
   printf("\nQuantidade de registros da agenda: %d\n", c->tamanho);
+
+  printf("\nPressione Enter para voltar ao menu!\n");
+  getchar();
 }/*FIM-imprime_agenda*/
 
 int valida_nome_endereco(char *vetor){
