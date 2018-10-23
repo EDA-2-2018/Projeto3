@@ -1,7 +1,8 @@
 /*
  * O que falta fazer:
- * - Testar e concertar cases da ordenação pela 2ª letra
- * - Validar ano da data_nasc
+ * - Verificar se os ponteiros: *ant, *prox, *inicio, *fim estão sendo apontados corretamente em cada edição na lista
+ * - Validar nome: para não conter números
+ * - Fazer uma função para o menu
  * - Função de remover registro por string
  * - Função de visualizar registro por string
  * - Parte de arquivos
@@ -10,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #define MAX_CONTATO 101
+#define ANO_ATUAL 2018
 #define TRUE 1
 #define FALSE 0
 
@@ -155,6 +157,7 @@ void imprime_agenda(Cabecalho *c){
     printf("\n\n%s\n%s\n%s\n%05d\n%s\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
     aux= aux->prox;
   }
+  printf("Tamanho agenda: %d\n", c->tamanho);
 }/*FIM-imprime_agenda*/
 
 int valida_nome_endereco(char *vetor){
@@ -195,7 +198,7 @@ int valida_cep(int cep){
 }/*FIM-valida_cep*/
 
 int valida_data_nasc(char *data_nasc){
-  int tam, digitos, dia, mes;
+  int tam, digitos, dia, mes, ano;
   tam = (int)strlen(data_nasc);
   digitos = FALSE;
 
@@ -209,8 +212,9 @@ int valida_data_nasc(char *data_nasc){
   if(digitos == FALSE){
     dia = (((int)data_nasc[0] - 48) * 10) + ((int)data_nasc[1] - 48);
     mes = (((int)data_nasc[3] - 48) * 10) + ((int)data_nasc[4] - 48);
+    ano = (((int)data_nasc[6] - 48) * 1000) + (((int)data_nasc[7] - 48) * 100) + (((int)data_nasc[8] - 48) * 10) + ((int)data_nasc[9] - 48);
 
-    if((dia < 1 || dia > 31) || (mes < 1 || mes > 12))
+    if((dia < 1 || dia > 31) || (mes < 1 || mes > 12) || (ano < 1 || ano > ANO_ATUAL))
       digitos = TRUE;
   }
 
@@ -229,25 +233,27 @@ void insertion_sort_contato(Cabecalho *c, Agenda *novo){
   if(c->inicio == NULL){ //CASO 1: Lista vazia
     novo->prox = novo->ant = NULL;
     c->inicio = c->fim = novo;
-    c->tamanho++;
 
-  }else if(novo->info->nome[0] < c->inicio->info->nome[0]){ //CASO 2: 2º nó da lista - vai para o inicio da lista
+  }else if(novo->info->nome[0] < c->inicio->info->nome[0] && c->tamanho == 1){ //CASO 2: 2º nó da lista - vai para o inicio da lista
     novo->prox = c->inicio;
     novo->ant = c->inicio->ant;
     c->inicio->ant = novo;
+    c->fim = c->inicio;
     c->inicio = novo;
-    c->tamanho++;
 
-  }else if(novo->info->nome[0] == c->inicio->info->nome[0]){ //CASO 2: 2º nó da lista- ordena pela 2ª letra
+  }else if(novo->info->nome[0] == c->inicio->info->nome[0] && c->tamanho == 1){ //CASO 2: 2º nó da lista- ordena pela 2ª letra
 
     if(novo->info->nome[1] < c->inicio->info->nome[1]){
       novo->prox = c->inicio;
       novo->ant = c->inicio->ant;
       c->inicio->ant = novo;
+      c->fim = c->inicio;
       c->inicio = novo;
-      c->tamanho++;
     }else{
-
+      novo->prox = c->inicio->prox;
+      novo->ant = c->inicio;
+      c->inicio->prox = novo;
+      c->fim = novo;
     }
 
   }else{ //CASO GERAL: Percorre lista até achar a posição correta para inserir o nó
@@ -261,7 +267,6 @@ void insertion_sort_contato(Cabecalho *c, Agenda *novo){
         break;
 
       }else if(novo->info->nome[0] == atual->info->nome[0]){ //Ordena pela 2ª letra
-        printf("Segunda letra\n");
         achou2 = TRUE;
         break;
 
@@ -269,39 +274,74 @@ void insertion_sort_contato(Cabecalho *c, Agenda *novo){
         aux = aux->prox;
       }
 
-    }
+    }/*FIM-for*/
 
     if(achou2 == TRUE && novo->info->nome[1] < atual->info->nome[1]){ //Ordena pela 2ª letra [Insere antes]
-      novo->ant = atual->ant;
-      novo->prox = atual;
-      atual->ant->prox = novo;
-      atual->ant = novo;
-      c->tamanho++;
 
-    }else if(achou2 == TRUE && novo->info->nome[1] != atual->info->nome[1]){ //Ordena pela 2ª letra [Insere depois]
-      novo->ant = atual;
-      novo->prox = atual->prox;
-      atual->prox->ant = novo;
-      atual->prox = novo;
-      c->tamanho++;
+      if(atual == c->inicio){
+        novo->ant = atual->ant;
+        novo->prox = atual;
+        c->inicio->ant = novo;
+        c->inicio = novo;
+      }else{
+        novo->ant = atual->ant;
+        novo->prox = atual;
+        atual->ant->prox = novo;
+        atual->ant = novo;
+      }
+
+    }else if(achou2 == TRUE && novo->info->nome[1] >= atual->info->nome[1]){ //Ordena pela 2ª letra [Insere depois]
+
+      for(aux= atual; atual->info->nome[0] == novo->info->nome[0] && aux != NULL; atual = aux){
+
+        if(novo->info->nome[1] <= atual->info->nome[1] && atual != c->fim){ //Insere antes no meio da lista
+          novo->ant = atual->ant;
+          novo->prox = atual;
+          atual->ant->prox = novo;
+          atual->ant = novo;
+          break;
+
+        }else if(novo->info->nome[1] < atual->info->nome[1] && atual == c->fim){ //Insere antes do último registro
+          novo->ant = atual->ant;
+          novo->prox = atual;
+          atual->ant->prox = novo;
+          atual->ant = novo;
+          break;
+
+        }else if(atual != c->fim && novo->info->nome[1] > atual->info->nome[1]){ //Insere depois no meio da lista
+          novo->ant = atual;
+          novo->prox = atual->prox;
+          atual->prox->ant = novo;
+          atual->prox = novo;
+          break;
+
+        }else if(atual == c->fim && novo->info->nome[1] >= atual->info->nome[1]){ //Insere depois no final da lista
+          novo->ant = c->fim;
+          novo->prox = c->fim->prox;
+          c->fim->prox = novo;
+          c->fim = novo;
+          break;
+        }else{
+          aux = aux->prox;
+        }
+
+      }/*FIM-for*/
 
     }else if(achou == TRUE){ //Insere o nó no meio da lista ordenada
       novo->prox = atual;
       novo->ant = atual->ant;
       atual->ant->prox = novo;
       atual->ant = novo;
-      c->tamanho++;
 
     }else{ //Insere no final da lista (agenda)
       novo->ant = c->fim;
       novo->prox = c->fim->prox;
       c->fim->prox = novo;
       c->fim = novo;
-      c->tamanho++;
-
     }
-
   }
+
+  c->tamanho++;
 
 }/*FIM-insertion_sort_contato*/
 
