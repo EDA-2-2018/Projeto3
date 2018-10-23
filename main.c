@@ -5,11 +5,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define FILE_NAME "contatos.txt"
 #define MAX_CONTATO 101
 #define ANO_ATUAL 2018
 #define TRUE 1
 #define FALSE 0
 
+
+/*
+ * STRUCTS
+ */
 //Info do nó da lista
 typedef struct contato{
   char nome[MAX_CONTATO];
@@ -30,6 +35,10 @@ typedef struct cabecalho{
   int tamanho; //Quantidade de contatos da agenda
 }Cabecalho;
 
+
+/*
+ * ASSINATURA DAS FUNÇÕES
+ */
 Cabecalho* inicia_cabecalho();
 Agenda* cria_contato(char *nome, char *tel, char *end, int cep, char *nasc); //aloca novo contato da agenda
 void insertion_sort_contato(Cabecalho *c, Agenda *novo); //insere contato na agenda ordenado pelo nome
@@ -45,16 +54,55 @@ void remover_contato(Cabecalho *c, Agenda *contato);
 void remover_contatos_por_string(char *pesquisa, Cabecalho *c); //remove todos os contatos que tiverem a string de entrada
 void imprime_contatos_por_string(char *pesquisa, Cabecalho *c); //imprime todos os contatos que tiverem a string de entrada
 void menu(Cabecalho *c);
+void carrega_contatos(Cabecalho *c);
 
+
+/*
+ * FUNÇÃO MAIN
+ */
 int main(int argc, char const *argv[]){
   Cabecalho *c;
 
   c = inicia_cabecalho();
 
+  //carrega_contatos(c);
+
   menu(c);
 
   return 0;
 }/*FIM-main*/
+
+
+/*
+ * ESCOPO DAS OUTRAS FUNÇÕES
+ */
+void carrega_contatos(Cabecalho *c){
+  Agenda *carrega;
+  FILE *arquivo;
+
+  char Nome[MAX_CONTATO];
+  char Telefone[11];
+  char Endereco[MAX_CONTATO];
+  int Cep;
+  char Data_nasc[11];
+
+  arquivo = fopen(FILE_NAME, "r");
+
+  if(arquivo != NULL){
+
+    while( (fscanf(arquivo, "%[^'\n']  %[^'\n']  %[^'\n']  %d  %[^'\n'] %*c", Nome, Telefone, Endereco, &Cep, Data_nasc)) != EOF){
+
+        carrega = cria_contato(Nome, Telefone, Endereco, Cep, Data_nasc);
+        insertion_sort_contato(c, carrega);
+    }
+
+  }else{
+    printf("Erro na arbertura do arquivo!\n");
+  }
+
+  fclose(arquivo);
+
+}/*FIM-carrega_contatos*/
 
 void menu(Cabecalho *c){
   int opc = 0;
@@ -243,9 +291,26 @@ int contem_string(char *nome, char *pesquisa){
 }/*FIM-contem_string*/
 
 void sair(Cabecalho *c){
-  //Libera lista
   Agenda *atual = c->inicio, *aux;
 
+  //Grava lista no arquivo
+  if(atual==NULL)
+    printf("\nNao ha contatos cadastrados!\n");
+    //Cria arquivo vazio
+
+  else{
+    FILE *arquivo;
+    arquivo = fopen(FILE_NAME, "w+");
+
+    for(aux= atual; aux != NULL; atual = aux) {
+      fprintf(arquivo, "%s\n%s\n%s\n%05d\n%s\n$\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
+      aux= aux->prox;
+    }
+
+    fclose(arquivo);
+  }
+
+  //Libera lista
   for(aux = atual; aux != NULL; atual = aux){
     aux = aux->prox;
     free(atual->info);
@@ -416,9 +481,9 @@ void insertion_sort_contato(Cabecalho *c, Agenda *novo){
       for(aux= atual; atual->info->nome[0] == novo->info->nome[0] && aux != NULL; atual = aux){
 
         if(novo->info->nome[1] <= atual->info->nome[1] && atual != c->fim){ //Insere antes no meio da lista
+          atual->ant->prox = novo;
           novo->ant = atual->ant;
           novo->prox = atual;
-          atual->ant->prox = novo;
           atual->ant = novo;
           break;
 
