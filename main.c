@@ -65,7 +65,7 @@ int main(int argc, char const *argv[]){
 
   c = inicia_cabecalho();
 
-  //carrega_contatos(c);
+  carrega_contatos(c);
 
   menu(c);
 
@@ -78,30 +78,40 @@ int main(int argc, char const *argv[]){
  */
 void carrega_contatos(Cabecalho *c){
   Agenda *carrega;
+
+  char ch;
   FILE *arquivo;
 
-  char Nome[MAX_CONTATO];
+  int count = 0;
+
+  char Nome[101];
   char Telefone[11];
-  char Endereco[MAX_CONTATO];
+  char Endereco[101];
   int Cep;
   char Data_nasc[11];
 
-  arquivo = fopen(FILE_NAME, "r");
+  arquivo = fopen("contatos.txt", "r");
 
-  if(arquivo != NULL){
+  if(arquivo) {
+    fclose(arquivo);
+  }
 
-    while( (fscanf(arquivo, "%[^'\n']  %[^'\n']  %[^'\n']  %d  %[^'\n'] %*c", Nome, Telefone, Endereco, &Cep, Data_nasc)) != EOF){
+  else{
+    arquivo = fopen("contatos.txt", "w");
+    fprintf(arquivo, "Tarra Casebolt\n96697-6327\n793 N. College St. La Vergne, TN\n37086\n26/09/1925\n$\nToney Schaffner\n95597-4268\n7596 East Vernon Drive Willingboro, NJ\n8046\n13/03/1936\n$\nMirna Halford\n97465-4294\n9841 Franklin St. Dalton, GA\n30721\n15/04/1951\n$\nBelva Yelvington\n99799-8331\n483 Roosevelt Street Ottumwa, IA\n52501\n25/09/1971\n$\nRodrigo Drews\n92130-3960\n10 Jockey Hollow Dr. Dothan, AL\n36301\n04/04/1994\n$\n");
+    fclose(arquivo);
+  }
 
-        carrega = cria_contato(Nome, Telefone, Endereco, Cep, Data_nasc);
-        insertion_sort_contato(c, carrega);
-    }
+  arquivo = fopen("contatos.txt", "r");
 
-  }else{
-    printf("Erro na arbertura do arquivo!\n");
+  while((fscanf(arquivo, " %[^'\n'] %[^'\n'] %[^'\n'] %d %[^'\n'] %c\n", Nome, Telefone, Endereco, &Cep, Data_nasc, &ch))!=EOF) {
+
+      carrega = cria_contato(Nome, Telefone, Endereco, Cep, Data_nasc);
+      insertion_sort_contato(c, carrega);
+
   }
 
   fclose(arquivo);
-
 }/*FIM-carrega_contatos*/
 
 void menu(Cabecalho *c){
@@ -384,30 +394,34 @@ int valida_cep(int cep){
 }/*FIM-valida_cep*/
 
 int valida_data_nasc(char *data_nasc){
-  int tam, digitos, dia, mes, ano;
-  tam = (int)strlen(data_nasc);
-  digitos = FALSE;
+  char dia[3];
+  char mes[3];
+  char ano[5];
 
-  for(int i = 0; i < 10; i++){
-    if((i == 2 || i == 5) && data_nasc[i] != '/')
-      digitos = TRUE;
-    else if(i != 2 && i != 5 && ( ((int)data_nasc[i]) < 48 || ((int)data_nasc[i]) > 57) )
-      digitos = TRUE;
-  }
+  sprintf(dia, "%c%c", data_nasc[0], data_nasc[1]);
+  sprintf(mes, "%c%c", data_nasc[3], data_nasc[4]);
+  sprintf(ano, "%c%c%c%c", data_nasc[6], data_nasc[7], data_nasc[8], data_nasc[9]);
 
-  if(digitos == FALSE){
-    dia = (((int)data_nasc[0] - 48) * 10) + ((int)data_nasc[1] - 48);
-    mes = (((int)data_nasc[3] - 48) * 10) + ((int)data_nasc[4] - 48);
-    ano = (((int)data_nasc[6] - 48) * 1000) + (((int)data_nasc[7] - 48) * 100) + (((int)data_nasc[8] - 48) * 10) + ((int)data_nasc[9] - 48);
+  if((atoi(dia) >= 1 && atoi(dia) <= 31) && (atoi(mes) >= 1 && atoi(mes) <= 12) && (atoi(ano) >= 1900 && atoi(ano) <= 2018))  {//verifica se os numeros sao validos
 
-    if((dia < 1 || dia > 31) || (mes < 1 || mes > 12) || (ano < 1 || ano > ANO_ATUAL))
-      digitos = TRUE;
-  }
+    if ((atoi(dia) == 29 && atoi(mes) == 2) && ((atoi(ano) % 4) == 0)) //verifica se o ano e bissexto
+        return TRUE;
 
-  if(tam != 10 || digitos)
-    return FALSE; //Não validou
-  else
-    return TRUE; //Validou
+    if (atoi(dia) <= 28 && atoi(mes) == 2) //verifica o mes de feveireiro
+        return TRUE;
+
+    if ((atoi(dia) <= 30) && (atoi(mes) == 4 || atoi(mes) == 6 || atoi(mes) == 9 || atoi(mes) == 11)) //verifica os meses de 30 dias
+      return TRUE;
+
+    if ((atoi(dia) <=31) && (atoi(mes) == 1 || atoi(mes) == 3 || atoi(mes) == 5 || atoi(mes) == 7 || atoi(mes) ==8 || atoi(mes) == 10 || atoi(mes) == 12)) //verifica os meses de 31 dias
+      return TRUE;
+
+    else
+      return FALSE;
+    }
+
+    else
+      return FALSE;
 }/*FIM-valida_data_nasc*/
 
 void insertion_sort_contato(Cabecalho *c, Agenda *novo){
@@ -512,6 +526,13 @@ void insertion_sort_contato(Cabecalho *c, Agenda *novo){
         }
 
       }/*FIM-for*/
+
+    }else if(achou == TRUE && novo->info->nome[0] < c->inicio->info->nome[0]){ //Insere no inicio
+      novo->prox = c->inicio;
+      novo->ant = c->inicio->ant;
+      c->inicio->ant = novo;
+      c->fim = c->inicio;
+      c->inicio = novo;
 
     }else if(achou == TRUE){ //Insere o nó no meio da lista ordenada
       novo->prox = atual;
