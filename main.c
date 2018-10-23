@@ -300,11 +300,14 @@ void sair(Cabecalho *c){
   Agenda *atual = c->inicio, *aux;
 
   //Grava lista no arquivo
-  if(atual==NULL)
-    printf("\nNao ha contatos cadastrados!\n");
+  if(atual==NULL){
+    printf("\nAgenda sem contatos cadastrados!\n");
     //Cria arquivo vazio
+    FILE *arquivo;
+    arquivo = fopen(FILE_NAME, "w");
+    fclose(arquivo);
 
-  else{
+  }else{
     FILE *arquivo;
     arquivo = fopen(FILE_NAME, "w+");
 
