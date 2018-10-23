@@ -1,10 +1,5 @@
 /*
  * O que falta fazer:
- * - Verificar se os ponteiros: *ant, *prox, *inicio, *fim estão sendo apontados corretamente em cada edição na lista
- * - Validar nome: para não conter números
- * - Fazer uma função para o menu
- * - Função de remover registro por string
- * - Função de visualizar registro por string
  * - Parte de arquivos
  */
 #include <stdio.h>
@@ -40,22 +35,30 @@ Agenda* cria_contato(char *nome, char *tel, char *end, int cep, char *nasc); //a
 void insertion_sort_contato(Cabecalho *c, Agenda *novo); //insere contato na agenda ordenado pelo nome
 void imprime_agenda(Cabecalho *c); //imprime lista já ordenada
 int valida_nome_endereco(char *vetor);
+int valida_nome(char *vetor);
 int valida_telefone(char *tel);
 int valida_cep(int cep);
 int valida_data_nasc(char *data_nasc);
 void sair(Cabecalho *c); //altera arquivo e libera agenda
-//void remover_contatos_por_string(); //remove todos os contatos que tiverem a string de entrada
-//void imprime_contatos_por_string(); //imprime todos os contatos que tiverem a string de entrada
+int contem_string(char *nome, char *pesquisa);
+void remover_contato(Cabecalho *c, Agenda *contato);
+void remover_contatos_por_string(char *pesquisa, Cabecalho *c); //remove todos os contatos que tiverem a string de entrada
+void imprime_contatos_por_string(char *pesquisa, Cabecalho *c); //imprime todos os contatos que tiverem a string de entrada
+void menu(Cabecalho *c);
 
 int main(int argc, char const *argv[]){
   Cabecalho *c;
-  int opc = 0;
 
   c = inicia_cabecalho();
 
-  /*
-   * MENU
-   */
+  menu(c);
+
+  return 0;
+}/*FIM-main*/
+
+void menu(Cabecalho *c){
+  int opc = 0;
+
   do{
     printf("\n\n>>>>>>> LISTA DE CONTATOS <<<<<<<\n\n1) Inserir novo registro;\n2) Remover registros por string;\n3) Visualizar registro por string;\n4) Imprimir lista em ordem alfabética;\n5) Sair;\n\nDIGITE SUA ESCOLHA: ");
     scanf("%d", &opc);
@@ -117,25 +120,127 @@ int main(int argc, char const *argv[]){
       }break;
 
       case 2:{
+        char pesquisa[MAX_CONTATO];
+
+        printf("\nDigite a string de pesquisa para remover o(s) registro(s): ");
+        scanf("%[^\n]", pesquisa);
+        getchar();
+
+        remover_contatos_por_string(pesquisa, c);
 
       }break;
 
       case 3:{
+        char pesquisa[MAX_CONTATO];
+
+        printf("\nDigite a string de pesquisa: ");
+        scanf("%[^\n]", pesquisa);
+        getchar();
+
+        imprime_contatos_por_string(pesquisa, c);
 
       }break;
 
       case 4:
         imprime_agenda(c);
         break;
+      default:
+        while(opc < 1 || opc > 5){
+          printf("\nEscolha uma opção válida: ");
+          scanf("%d", &opc);
+          getchar();
+        }
+        break;
     }
 
-  }while(opc > 0 && opc < 5);
+  }while(opc != 5);
 
   if(opc == 5) //Gravar lista no arquivo, liberar ponteiros e sair;
     sair(c);
 
-  return 0;
-}/*FIM-main*/
+}/*FIM-menu*/
+
+void remover_contatos_por_string(char *pesquisa, Cabecalho *c){
+  Agenda *atual = c->inicio, *aux;
+  int exclua;
+
+  for(aux= atual; aux != NULL; atual = aux){
+    exclua = contem_string(atual->info->nome, pesquisa);
+    if(exclua){
+      remover_contato(c, atual);
+      atual = c->inicio;
+    }
+    aux= aux->prox;
+  }
+}/*FIM-remover_contatos_por_string*/
+
+void remover_contato(Cabecalho *c, Agenda *contato){
+
+  if(c->tamanho == 0 && (c->inicio == NULL && c->fim == NULL)){
+    c->tamanho = 1;
+
+  }else if(c->tamanho == 1){
+    c->inicio = c->fim = NULL;
+    free(contato->info);
+    free(contato);
+
+  }else if(c->tamanho == 2 && contato == c->inicio){
+    c->inicio = c->fim;
+    c->inicio->prox = c->inicio->ant = NULL;
+    free(contato->info);
+    free(contato);
+
+  }else if(c->tamanho == 2 && contato == c->fim){
+    c->fim = c->inicio;
+    c->fim->prox = c->fim->ant = NULL;
+    free(contato->info);
+    free(contato);
+
+  }else if(contato == c->inicio && c->tamanho > 2){ //Remove do inicio da lista
+    c->inicio = contato->prox;
+    contato->prox->ant = NULL;
+    free(contato->info);
+    free(contato);
+
+  }else if(contato == c->fim && c->tamanho > 2){ //Remove do final da lista
+    c->fim = contato->ant;
+    contato->ant->prox = NULL;
+    free(contato->info);
+    free(contato);
+  }else{ //Remove do meio da lista
+    contato->prox->ant = contato->ant;
+    contato->ant->prox = contato->prox;
+    free(contato->info);
+    free(contato);
+  }
+
+  c->tamanho--;
+
+}/*FIM-remover_contato*/
+
+void imprime_contatos_por_string(char *pesquisa, Cabecalho *c){
+  Agenda *atual = c->inicio, *aux;
+  int imprime;
+
+  for(aux= atual; aux != NULL; atual = aux){
+    imprime = contem_string(atual->info->nome, pesquisa);
+    if(imprime)
+      printf("\n\n%s\n%s\n%s\n%05d\n%s\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
+    aux= aux->prox;
+  }
+
+}/*FIM-imprime_contatos_por_string*/
+
+int contem_string(char *nome, char *pesquisa){
+  char *test;
+
+  test = strstr(nome, pesquisa);
+
+  if(test == NULL)
+    return 0; //Não contem
+  else
+    return 1; //Pesquisa está dentro do nome
+}/*FIM-contem_string*/
 
 void sair(Cabecalho *c){
   //Libera lista
@@ -157,7 +262,7 @@ void imprime_agenda(Cabecalho *c){
     printf("\n\n%s\n%s\n%s\n%05d\n%s\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
     aux= aux->prox;
   }
-  printf("Tamanho agenda: %d\n", c->tamanho);
+  printf("\nQuantidade de registros da agenda: %d\n", c->tamanho);
 }/*FIM-imprime_agenda*/
 
 int valida_nome_endereco(char *vetor){
@@ -168,6 +273,22 @@ int valida_nome_endereco(char *vetor){
   else
     return TRUE; //Validou
 
+}/*FIM-valida_nome_endereco*/
+
+int valida_nome(char *vetor){
+  int tam, digitos;
+  tam = (int)strlen(vetor);
+  digitos = FALSE;
+
+  for(int i = 0; i < MAX_CONTATO; i++){
+    if(vetor[i] >= '0' || vetor[i] <= '9')
+      digitos = TRUE;
+  }
+
+  if(tam > (MAX_CONTATO - 1) || digitos)
+    return FALSE; //Não validou
+  else
+    return TRUE; //Validou
 }/*FIM-valida_nome_endereco*/
 
 int valida_telefone(char *tel){
