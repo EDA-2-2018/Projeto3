@@ -1,7 +1,3 @@
-/*
- * O que falta fazer:
- * - Parte de arquivos
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,10 +75,7 @@ int main(int argc, char const *argv[]){
 void carrega_contatos(Cabecalho *c){
   Agenda *carrega;
 
-  char ch;
   FILE *arquivo;
-
-  int count = 0;
 
   char Nome[101];
   char Telefone[11];
@@ -104,10 +97,11 @@ void carrega_contatos(Cabecalho *c){
 
   arquivo = fopen("contatos.txt", "r");
 
-  while((fscanf(arquivo, " %[^'\n'] %[^'\n'] %[^'\n'] %d %[^'\n'] %c\n", Nome, Telefone, Endereco, &Cep, Data_nasc, &ch))!=EOF) {
+  while((fscanf(arquivo, "%[^'\n'] %*c %[^'\n'] %*c %[^'\n'] %*c %d %*c %[^'\n'] %*c\n", Nome, Telefone, Endereco, &Cep, Data_nasc))!=EOF) {
 
       carrega = cria_contato(Nome, Telefone, Endereco, Cep, Data_nasc);
       insertion_sort_contato(c, carrega);
+      //imprime_agenda(c);
 
   }
 
@@ -195,11 +189,13 @@ void menu(Cabecalho *c){
         scanf("%[^\n]", pesquisa);
         getchar();
 
+        system("clear");
         imprime_contatos_por_string(pesquisa, c);
 
       }break;
 
       case 4:
+        system("clear");
         imprime_agenda(c);
         break;
       default:
@@ -265,7 +261,7 @@ void remover_contato(Cabecalho *c, Agenda *contato){
     contato->ant->prox = NULL;
     free(contato->info);
     free(contato);
-  }else{ //Remove do meio da lista
+  }else if(c->tamanho > 2 && contato != c->inicio && contato != c->fim){ //Remove do meio da lista
     contato->prox->ant = contato->ant;
     contato->ant->prox = contato->prox;
     free(contato->info);
@@ -335,6 +331,9 @@ void imprime_agenda(Cabecalho *c){
 
   for(aux= atual; aux != NULL; atual = aux){
     printf("\n\n%s\n%s\n%s\n%05d\n%s\n", atual->info->nome, atual->info->telefone, atual->info->endereco, atual->info->cep, atual->info->data_nasc);
+    //if(atual->ant != NULL && atual->prox != NULL)
+      //printf("Ant: %s\nProx: %s\n", atual->ant->info->nome, atual->prox->info->nome);
+    //printf("Inicio: %s\nFim: %s\n", c->inicio->info->nome, c->fim->info->nome);
     aux= aux->prox;
   }
   printf("\nQuantidade de registros da agenda: %d\n", c->tamanho);
@@ -531,7 +530,6 @@ void insertion_sort_contato(Cabecalho *c, Agenda *novo){
       novo->prox = c->inicio;
       novo->ant = c->inicio->ant;
       c->inicio->ant = novo;
-      c->fim = c->inicio;
       c->inicio = novo;
 
     }else if(achou == TRUE){ //Insere o nó no meio da lista ordenada
@@ -541,6 +539,7 @@ void insertion_sort_contato(Cabecalho *c, Agenda *novo){
       atual->ant = novo;
 
     }else{ //Insere no final da lista (agenda)
+      printf("Insere no fim\n");
       novo->ant = c->fim;
       novo->prox = c->fim->prox;
       c->fim->prox = novo;
